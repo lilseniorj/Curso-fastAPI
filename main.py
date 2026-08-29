@@ -3,7 +3,7 @@ from __future__ import annotations
 import zoneinfo
 from datetime import datetime
 
-from fastapi import Depends, FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException
 from sqlmodel import select
 
 from db import SessionDependency, create_all_tables
