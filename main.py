@@ -1,14 +1,15 @@
+from __future__ import annotations
+
 import zoneinfo
 from datetime import datetime
 
-from fastapi import FastAPI, HTTPException
-
-from db import SessionDependency, create_all_tables
-from models import Customer, CustomerCreate, Invoice, Transaction
+from fastapi import Depends, FastAPI, HTTPException
 from sqlmodel import select
 
-app = FastAPI(lifespan=create_all_tables)
+from db import SessionDependency, create_all_tables
+from models import Customer, CustomerCreate, CustomerUpdate, Invoice, Transaction
 
+app = FastAPI(lifespan=create_all_tables)
 
 
 @app.get("/")
@@ -38,7 +39,9 @@ async def time(iso_code: str, format_24: bool = True):
         "time": datetime.now(tz).strftime(datetime_format),
     }
 
+
 db_customers: list[Customer] = []
+
 
 @app.post("/customers", response_model=Customer)
 async def create_customer(customer_data: CustomerCreate, session: SessionDependency):
@@ -47,6 +50,47 @@ async def create_customer(customer_data: CustomerCreate, session: SessionDepende
     session.commit()
     session.refresh(customer)
     return customer
+
+
+@app.get("/customers/{customer_id}", response_model=Customer)
+async def read_customer(customer_id: int, session: SessionDependency):
+    customer_db = session.get(Customer, customer_id)
+    if not customer_db:
+        raise HTTPException(status_code=404, detail="Customer not found")
+    return customer_db
+
+
+@app.delete("/customers/{customer_id}")
+async def delete_customer(customer_id: int, session: SessionDependency):
+    customer_db = session.get(Customer, customer_id)
+    if not customer_db:
+        raise HTTPException(status_code=404, detail="Customer not found")
+    session.delete(customer_db)
+    session.commit()
+    return {"detail": "Ok, customer deleted successfully"}
+
+
+@app.patch("/customers/{customer_id}", response_model=Customer)
+async def update_customer(customer_id: int, customer_data: CustomerUpdate, session: SessionDependency):
+    # 1. Buscar si el cliente existe en la base de datos
+    customer_db = session.get(Customer, customer_id)
+    if not customer_db:
+        raise HTTPException(status_code=404, detail="Customer not found")
+
+    # 2. Extraer solo los campos que el usuario envió en el JSON (ignora los omitidos)
+    update_data = customer_data.model_dump(exclude_unset=True)
+
+    # 3. Mapear dinámicamente los nuevos datos al objeto de la BD
+    for key, value in update_data.items():
+        setattr(customer_db, key, value)
+
+    # 4. Confirmar cambios y refrescar
+    session.add(customer_db)
+    session.commit()
+    session.refresh(customer_db)
+
+    return customer_db
+
 
 @app.get("/customers", response_model=list[Customer])
 async def list_customer(session: SessionDependency):
@@ -59,6 +103,7 @@ async def get_customer(id: int):
         if customer.id == id:
             return customer
     raise HTTPException(status_code=404, detail="Customer no encontrado")
+
 
 @app.post("/transactions")
 async def create_transaction(transaction_data: Transaction):

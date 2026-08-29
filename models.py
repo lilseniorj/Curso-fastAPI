@@ -3,12 +3,15 @@ from sqlmodel import Field, SQLModel
 
 
 class CustomerBase(SQLModel):
-    name: str = Field(default=None)
-    description: str = Field(default=None)
-    email: str = Field(default=None)
-    age: int = Field(default=None)
+    name: str | None = Field(default=None)
+    description: str | None = None
+    email: str | None= Field(default=None)
+    age: int | None= Field(default=None)
 
 class CustomerCreate(CustomerBase):
+    name: str
+    email: str
+class CustomerUpdate(CustomerBase):
     pass
 
 class Customer(CustomerBase, table=True):
