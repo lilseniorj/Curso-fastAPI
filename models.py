@@ -9,13 +9,15 @@ class CustomerBase(SQLModel):
     age: int | None= Field(default=None)
 
 class CustomerCreate(CustomerBase):
-    name: str
-    email: str
+    pass
+
 class CustomerUpdate(CustomerBase):
     pass
 
+
 class Customer(CustomerBase, table=True):
     id: int | None = Field(default=None, primary_key=True)
+
 
 class Transaction(BaseModel):
     id: int

@@ -60,16 +60,6 @@ async def read_customer(customer_id: int, session: SessionDependency):
     return customer_db
 
 
-@app.delete("/customers/{customer_id}")
-async def delete_customer(customer_id: int, session: SessionDependency):
-    customer_db = session.get(Customer, customer_id)
-    if not customer_db:
-        raise HTTPException(status_code=404, detail="Customer not found")
-    session.delete(customer_db)
-    session.commit()
-    return {"detail": "Ok, customer deleted successfully"}
-
-
 @app.patch("/customers/{customer_id}", response_model=Customer)
 async def update_customer(customer_id: int, customer_data: CustomerUpdate, session: SessionDependency):
     # 1. Buscar si el cliente existe en la base de datos
@@ -80,9 +70,8 @@ async def update_customer(customer_id: int, customer_data: CustomerUpdate, sessi
     # 2. Extraer solo los campos que el usuario envió en el JSON (ignora los omitidos)
     update_data = customer_data.model_dump(exclude_unset=True)
 
-    # 3. Mapear dinámicamente los nuevos datos al objeto de la BD
-    for key, value in update_data.items():
-        setattr(customer_db, key, value)
+    # 3. Actualizar el objeto usando la función nativa de SQLModel (¡Adiós al bucle for!)
+    customer_db.sqlmodel_update(update_data)
 
     # 4. Confirmar cambios y refrescar
     session.add(customer_db)
@@ -90,6 +79,16 @@ async def update_customer(customer_id: int, customer_data: CustomerUpdate, sessi
     session.refresh(customer_db)
 
     return customer_db
+
+
+@app.delete("/customers/{customer_id}")
+async def delete_customer(customer_id: int, session: SessionDependency):
+    customer_db = session.get(Customer, customer_id)
+    if not customer_db:
+        raise HTTPException(status_code=404, detail="Customer not found")
+    session.delete(customer_db)
+    session.commit()
+    return {"detail": "Ok, customer deleted successfully"}
 
 
 @app.get("/customers", response_model=list[Customer])
