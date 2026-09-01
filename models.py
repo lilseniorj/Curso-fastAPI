@@ -2,6 +2,23 @@ from pydantic import BaseModel
 from sqlmodel import Field, Relationship, SQLModel
 
 
+class CustomerPlan(SQLModel, table=True):
+    id: int = Field(primary_key=True)
+    plan_id: int = Field(foreign_key="plan.id")
+    customer_id: int = Field(foreign_key="customer.id")
+
+
+class Plan(SQLModel, table=True):
+    id: int | None = Field(primary_key=True)
+    name: str = Field(default=None)
+    description: str | None = None
+    price: int = Field(default=None)
+    descripcion: str = Field(default=None)
+    customers: list["Customer"] = Relationship(
+        back_populates="plans", link_model=CustomerPlan
+    )
+
+
 class CustomerBase(SQLModel):
     name: str | None = Field(default=None)
     description: str | None = None
@@ -18,6 +35,9 @@ class CustomerUpdate(CustomerBase):
 class Customer(CustomerBase, table=True):
     id: int | None = Field(default=None, primary_key=True)
     transactions: list["Transaction"] = Relationship(back_populates="customer")
+    plans: list[Plan] = Relationship(
+        back_populates="customers", link_model=CustomerPlan
+    )
 
 class TransactionBase(SQLModel):
     amount: int
