@@ -8,7 +8,7 @@ from fastapi import FastAPI
 from db import create_all_tables
 from models import Invoice, Transaction
 
-from .routers import customers, plans ,transactions
+from .routers import customers, plans, transactions
 
 app = FastAPI(lifespan=create_all_tables)
 app.include_router(customers.router)

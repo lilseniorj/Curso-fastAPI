@@ -2,7 +2,14 @@ from fastapi import APIRouter, HTTPException
 from sqlmodel import select
 
 from db import SessionDependency
-from models import Customer, CustomerCreate, CustomerPlan, CustomerUpdate, Plan
+from models import (
+    Customer,
+    CustomerCreate,
+    CustomerPlan,
+    CustomerUpdate,
+    Plan,
+    StatusEnum,
+)
 
 router = APIRouter()
 
@@ -92,10 +99,16 @@ async def subscribe_customer_to_plan(
 
 
 @router.get("/customers/{customer_id}/plans")
-async def list_customer_plans(customer_id: int, session: SessionDependency):
+async def list_customer_plans(customer_id: int, session: SessionDependency, status: StatusEnum = StatusEnum.ACTIVE
+):
     customer_db = session.get(Customer, customer_id)
 
     if not customer_db:
         raise HTTPException(status_code=404, detail="Customer not found")
 
-    return customer_db.plans
+    query = select(CustomerPlan).where(
+        CustomerPlan.customer_id == customer_db.id,
+        CustomerPlan.status == status
+    )
+
+    return session.exec(query).all()
