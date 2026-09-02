@@ -9,11 +9,10 @@ class CustomerPlan(SQLModel, table=True):
 
 
 class Plan(SQLModel, table=True):
-    id: int | None = Field(primary_key=True)
+    id: int | None = Field(primary_key=True, default=None)
     name: str = Field(default=None)
     description: str | None = None
     price: int = Field(default=None)
-    descripcion: str = Field(default=None)
     customers: list["Customer"] = Relationship(
         back_populates="plans", link_model=CustomerPlan
     )

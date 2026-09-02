@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException
 from sqlmodel import select
 
 from db import SessionDependency
-from models import Customer, CustomerCreate, CustomerUpdate
+from models import Customer, CustomerCreate, CustomerPlan, CustomerUpdate, Plan
 
 router = APIRouter()
 
@@ -27,7 +27,7 @@ async def read_customer(customer_id: int, session: SessionDependency):
     return customer_db
 
 
-@router.patch("/customers/{customer_id}", response_model=Customer,tags=["customers"])
+@router.patch("/customers/{customer_id}", response_model=Customer, tags=["customers"])
 async def update_customer(
     customer_id: int, customer_data: CustomerUpdate, session: SessionDependency
 ):
@@ -71,3 +71,31 @@ async def get_customer(id: int):
         if customer.id == id:
             return customer
     raise HTTPException(status_code=404, detail="Customer no encontrado")
+
+
+@router.post("/customers/{customer_id}/plans/{plan_id}")
+async def subscribe_customer_to_plan(
+    customer_id: int, plan_id: int, session: SessionDependency
+):
+    customer_db = session.get(Customer, customer_id)
+    plan_db = session.get(Plan, plan_id)
+
+    if not customer_db or not plan_db:
+        raise HTTPException(status_code=404, detail="Customer or Plan not found")
+
+    customer_plan_db = CustomerPlan(plan_id=plan_db.id, customer_id=customer_db.id)
+
+    session.add(customer_plan_db)
+    session.commit()
+    session.refresh(customer_plan_db)
+    return customer_plan_db
+
+
+@router.get("/customers/{customer_id}/plans")
+async def list_customer_plans(customer_id: int, session: SessionDependency):
+    customer_db = session.get(Customer, customer_id)
+
+    if not customer_db:
+        raise HTTPException(status_code=404, detail="Customer not found")
+
+    return customer_db.plans
