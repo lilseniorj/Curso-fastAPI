@@ -32,17 +32,53 @@ class CustomerBase(SQLModel):
     description: str | None = None
     email: EmailStr | None= Field(default=None)
     age: int | None= Field(default=None)
+    phone: str | None= Field(default=None)
+    document_id: str | None= Field(default=None)
 
     @field_validator("email")
     @classmethod
     def validate_email(cls, value):
+        if value is None:
+            return value
+
+        value = value.lower()
+
         with Session(engine) as session:
             query = select(Customer).where(Customer.email == value)
             result = session.exec(query).first()
             if result:
-                raise ValueError("This Email already registered")
+                raise ValueError("This Email is already registered")
             return value
 
+    @field_validator("phone")
+    @classmethod
+    def validate_phone(cls, value):
+        if value is None:
+            return value
+
+        value = value.replace(" ", "").replace("-", "")
+
+        if not value.isdigit():
+            raise ValueError("Phone number must contain only digits")
+        if len(value) != 10:
+            raise ValueError("Phone number must be 10 digits long")
+        return value
+
+    @field_validator("document_id")
+    @classmethod
+    def validate_document_id(cls, value):
+        if value is None:
+            return value
+
+        value = value.strip()
+
+        if not value.isdigit():
+            raise ValueError("Document ID must contain only digits")
+        with Session(engine) as session:
+            query = select(Customer).where(Customer.document_id == value)
+            if session.exec(query).first():
+                raise ValueError("This Document ID is already registered")
+            return value
 
 class CustomerCreate(CustomerBase):
     pass

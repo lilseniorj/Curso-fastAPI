@@ -64,7 +64,7 @@ async def delete_customer(customer_id: int, session: SessionDependency):
         raise HTTPException(status_code=404, detail="Customer not found")
     session.delete(customer_db)
     session.commit()
-    return {"detail": "Ok, customer deleted successfully"}
+    return {"detail": "Customer deleted successfully"}
 
 
 @router.get("/customers", response_model=list[Customer], tags=["customers"])
@@ -77,7 +77,7 @@ async def get_customer(id: int):
     for customer in db_customers:
         if customer.id == id:
             return customer
-    raise HTTPException(status_code=404, detail="Customer no encontrado")
+    raise HTTPException(status_code=404, detail="Customer not found")
 
 
 @router.post("/customers/{customer_id}/plans/{plan_id}")
