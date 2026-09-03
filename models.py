@@ -1,7 +1,9 @@
 from enum import Enum
 
-from pydantic import BaseModel
-from sqlmodel import Field, Relationship, SQLModel
+from pydantic import BaseModel, EmailStr, field_validator
+from sqlmodel import Field, Relationship, Session, SQLModel, select
+
+from db import engine
 
 
 class StatusEnum(str, Enum):
@@ -28,8 +30,19 @@ class Plan(SQLModel, table=True):
 class CustomerBase(SQLModel):
     name: str | None = Field(default=None)
     description: str | None = None
-    email: str | None= Field(default=None)
+    email: EmailStr | None= Field(default=None)
     age: int | None= Field(default=None)
+
+    @field_validator("email")
+    @classmethod
+    def validate_email(cls, value):
+        with Session(engine) as session:
+            query = select(Customer).where(Customer.email == value)
+            result = session.exec(query).first()
+            if result:
+                raise ValueError("This Email already registered")
+            return value
+
 
 class CustomerCreate(CustomerBase):
     pass
