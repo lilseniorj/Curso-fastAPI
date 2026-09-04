@@ -6,6 +6,7 @@ from sqlmodel import Session, SQLModel
 
 from app.main import app
 from db import get_session
+from models import Customer
 
 sqlite_name = "db.sqlite3"
 sqlite_url = "sqlite://"
@@ -33,3 +34,16 @@ def client_fixture(session: Session):
     client = TestClient(app)
     yield client
     app.dependency_overrides.clear()
+
+@pytest.fixture(name="customer")
+def customer_fixture(session: Session):
+    customer = Customer(
+        name= "Cliente de prueba",
+        description= "Creado por la prueba",
+        email= "fixture-test@ejemplo.com",
+        age= 33,
+    )
+    session.add(customer)
+    session.commit()
+    session.refresh(customer)
+    yield customer
