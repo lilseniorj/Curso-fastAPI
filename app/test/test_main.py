@@ -1,12 +1,18 @@
+import os
 import re
 
 from fastapi import status
 
 
 def test_root(client):
-    response = client.get("/")
+    response = client.get("/", auth=(os.getenv("API_USERNAME"), os.getenv("API_PASSWORD")))
     assert response.status_code == status.HTTP_200_OK
     assert "message" in response.json()
+
+
+def test_root_sin_credenciales(client):
+    response = client.get("/")
+    assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
 
 def test_time_returns_country_timezone(client):

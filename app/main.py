@@ -1,16 +1,22 @@
 from __future__ import annotations
 
+import os
+import secrets
 import time
 import zoneinfo
 from datetime import datetime
+from typing import Annotated
 
-from fastapi import FastAPI, Request
+from dotenv import load_dotenv
+from fastapi import Depends, FastAPI, HTTPException, Request, status
+from fastapi.security import HTTPBasic, HTTPBasicCredentials
 
 from db import create_all_tables
 from models import Invoice
 
 from .routers import customers, plans, transactions
 
+load_dotenv()
 app = FastAPI(lifespan=create_all_tables)
 app.include_router(customers.router)
 app.include_router(transactions.router)
@@ -36,11 +42,14 @@ async def log_request_headers(request: Request, call_next):
     response = await call_next(request)
     return response
 
+security = HTTPBasic()
 
 @app.get("/")
-async def root():
-
-    return {"message": "Hello Lil Seniorj"}
+async def root(credentials: Annotated[HTTPBasicCredentials ,Depends(security)]):
+    if credentials.username == os.getenv("API_USERNAME") and secrets.compare_digest(credentials.password, os.getenv("API_PASSWORD")):
+        return {"message": f"Hello, {credentials.username}!"}
+    else:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
 
 
 country_timezone = {
