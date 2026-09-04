@@ -1,3 +1,5 @@
+from typing import Annotated
+
 from fastapi import APIRouter, HTTPException, Query
 from sqlmodel import select
 
@@ -17,7 +19,7 @@ router = APIRouter()
 db_customers: list[Customer] = []
 
 
-@router.post("/customers", response_model=Customer, status_code=201 ,tags=["customers"])
+@router.post("/customers", response_model=Customer, status_code=201, tags=["customers"])
 async def create_customer(customer_data: CustomerCreate, session: SessionDependency):
     customer = Customer.model_validate(customer_data.model_dump())
     session.add(customer)
@@ -85,7 +87,7 @@ async def subscribe_customer_to_plan(
     customer_id: int,
     plan_id: int,
     session: SessionDependency,
-    plan_status: StatusEnum = Query(default=StatusEnum.active),
+    plan_status: Annotated[StatusEnum, Query()] = StatusEnum.active,
 ):
     customer_db = session.get(Customer, customer_id)
     plan_db = session.get(Plan, plan_id)
@@ -107,7 +109,7 @@ async def subscribe_customer_to_plan(
 async def list_customer_plans(
     customer_id: int,
     session: SessionDependency,
-    plan_status: list[StatusEnum] = Query(default=[StatusEnum.active]),
+    plan_status: Annotated[StatusEnum, Query()] = StatusEnum.active,
 ):
     customer_db = session.get(Customer, customer_id)
 
