@@ -30,7 +30,7 @@ class Plan(SQLModel, table=True):
 class CustomerBase(SQLModel):
     name: str | None = Field(default=None)
     description: str | None = None
-    email: EmailStr | None= Field(default=None)
+    email: EmailStr | None= Field(default=None, unique=True)
     age: int | None= Field(default=None)
     phone: str | None= Field(default=None)
     document_id: str | None= Field(default=None)
