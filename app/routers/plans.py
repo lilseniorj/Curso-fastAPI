@@ -16,5 +16,6 @@ def create_plan(plan_data: Plan, session: SessionDependency):
 
 @router.get("/plans", response_model=list[Plan])
 def list_plan(session: SessionDependency):
-    plans = session.exec(select(Plan).all())
+    query = select(Plan)
+    plans = session.exec(query).all()
     return plans
